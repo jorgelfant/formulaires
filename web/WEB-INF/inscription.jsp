@@ -32,6 +32,21 @@
  Vous pouvez maintenant faire le test : remplissez votre formulaire avec des données erronées (une adresse mail invalide,
  un nom d'utilisateur trop court ou des mots de passe différents, par exemple) et contemplez le résultat ! À la figure
  suivante, le rendu attendu lorsque vous entrez un nom d'utilisateur trop court.
+
+------------------------------------------------------------------------------------------------------------------------
+                                  2. Réafficher les données saisies par l'utilisateur
+------------------------------------------------------------------------------------------------------------------------
+
+ Comme vous le constatez sur cette dernière image, les données saisies par l'utilisateur avant validation du
+ formulaire disparaissent des champs après validation. En ce qui concerne les champs mot de passe et confirmation,
+ c'est très bien ainsi : après une erreur de validation, il est courant de demander à l'utilisateur de saisir à
+ nouveau cette information sensible. Dans le cas du nom et de l'adresse mail par contre, ce n'est vraiment pas
+ ergonomique et nous allons tâcher de les faire réapparaître. Pour cette étape, nous pourrions être tentés de
+ simplement réafficher directement ce qu'a saisi l'utilisateur dans chacun des champs "value" des <input> du
+ formulaire. En effet, nous savons que ces données sont directement accessibles via l'objet implicite param, qui
+ donne accès aux paramètres de la requête HTTP. Le problème, et c'est un problème de taille, c'est qu'en procédant
+ ainsi nous nous exposons aux failles XSS. Souvenez-vous : je vous en ai déjà parlé lorsque nous avons découvert
+ la balise <c:out> de la JSTL !
 --%>
 
 
