@@ -38,3 +38,7 @@ form .requis {
 form .erreur {
     color: #900;
 }
+/******************************* Pour afficher les messages de succes en vert ***************************************/
+form .succes {
+    color: #090;
+}

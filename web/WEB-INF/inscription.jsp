@@ -1,3 +1,4 @@
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%--
   Created by IntelliJ IDEA.
   User: jorge.carrillo
@@ -47,6 +48,97 @@
  donne accès aux paramètres de la requête HTTP. Le problème, et c'est un problème de taille, c'est qu'en procédant
  ainsi nous nous exposons aux failles XSS. Souvenez-vous : je vous en ai déjà parlé lorsque nous avons découvert
  la balise <c:out> de la JSTL !
+
+ Quel est le problème exactement ?
+
+Bien... puisque vous semblez amnésiques et sceptiques, faisons comme si de rien n'était, et réaffichons le contenu
+des paramètres de la requête HTTP (c'est-à-dire le contenu saisi par l'utilisateur dans les champs <input> du formulaire)
+en y accédant directement via l'objet implicite param, aux lignes 16 et 31 :
+
+Faites alors à nouveau le test en remplissant et validant votre formulaire. Dorénavant, les données que vous avez
+entrées sont bien présentes dans les champs du formulaire après validation, ainsi que vous pouvez le constater à la
+figure suivante.
+
+                   <label for="email">Adresse email <span class="requis">*</span></label>
+                   <input type="text" id="email" name="email" value="${param.email}" size="20" maxlength="60"/>
+                   <span class="erreur">${requestScope.erreurs['email']}</span>
+                   <br/>
+
+En apparence ça tient la route, mais je vous ai lourdement avertis : en procédant ainsi, votre code est vulnérable
+aux failles XSS. Vous voulez un exemple ? Remplissez le champ nom d'utilisateur par le contenu suivant : ">Bip bip ! .
+Validez ensuite votre formulaire, et contemplez alors ce triste et désagréable résultat (voir la figure suivante).
+
+------------------------------------------------------------------------------------------------------------------------
+                                                 Que s'est-il passé ?
+------------------------------------------------------------------------------------------------------------------------
+
+Une faille XSS, pardi ! Eh oui, côté serveur, le contenu que vous avez saisi dans le champ du formulaire a été copié
+tel quel dans le code généré par notre JSP. Il a ensuite été interprété par le navigateur côté client, qui a alors
+naturellement considéré que le guillemet " et le chevron > contenus en début de saisie correspondaient à la fermeture
+de la balise <input> ! Si vous êtes encore dans le flou, voyez plutôt le code HTML produit sur la ligne posant
+problème :
+
+             <input type="text" id="nom" name="nom" value="">Bip bip !" size="20" maxlength="20" />
+
+Vous devez maintenant comprendre le problème : le contenu de notre champ a été copié puis collé tel quel dans la source
+de notre fichier HTML final, lors de l'interprétation par le serveur de l'expression EL que nous avons mise en place
+(c'est-à-dire ${param.nom}). Et logiquement, puisque le navigateur ferme la balise <input> prématurément, notre joli
+formulaire s'en retrouve défiguré. Certes, ici ce n'est pas bien grave, je n'ai fait que casser l'affichage de la page.
+Mais vous devez savoir qu'en utilisant ce type de failles, il est possible de causer bien plus de dommages, notamment
+en injectant du code Javascript dans la page à l'insu du client.
+
+Je vous le répète : la règle d'or, c'est de ne jamais faire confiance à l'utilisateur.
+
+Pour pallier ce problème, il suffit d'utiliser la balise <c:out> de la JSTL Core pour procéder à l'affichage des données.
+Voici ce que donne alors le code modifié de notre JSP, observez bien les lignes 17 et 32 :
+
+    <input type="text" id="email" name="email" value="<c:out value="${param.email}"/>" size="20" maxlength="60"/>
+
+La balise <c:out> se chargeant par défaut d'échapper les caractères spéciaux, le problème est réglé. Notez l'ajout de
+la directive taglib en haut de page, pour que la JSP puisse utiliser les balises de la JSTL Core. Faites à nouveau le
+test avec le nom d'utilisateur précédent, et vous obtiendrez bien cette fois le résultat affiché à la figure suivante.
+
+Dorénavant, l'affichage n'est plus cassé, et si nous regardons le code HTML généré, nous observons bien la
+transformation du " et du > en leurs codes HTML respectifs par la balise <c:out> :
+
+             <input type="text" id="nom" name="nom" value="&#034;&gt;Bip bip !" size="20" maxlength="20" />
+
+Ainsi, le navigateur de l'utilisateur reconnaît que les caractères " et > font bien partie du contenu du champ, et
+qu'ils ne doivent pas être interprétés en tant qu'éléments de fermeture de la balise <input> !
+
+À l'avenir, n'oubliez jamais ceci : protégez toujours les données que vous affichez à l'utilisateur !
+
+------------------------------------------------------------------------------------------------------------------------
+                                  3. Afficher le résultat final de l'inscription
+------------------------------------------------------------------------------------------------------------------------
+
+Il ne nous reste maintenant qu'à confirmer le statut de l'inscription. Pour ce faire, il suffit d'afficher l'entrée
+resultat de la Map dans laquelle nous avons initialisé le message, à la ligne 149 dans le code suivant :
+
+Vous remarquez ici l'utilisation d'un test ternaire sur notre Map erreurs au sein de la première expression EL mise en
+place, afin de déterminer la classe CSS à appliquer au paragraphe. Si la Map erreurs est vide, alors cela signifie
+qu'aucune erreur n'a eu lieu et on utilise le style nommé succes, sinon on utilise le style erreur. En effet, j'en ai
+profité pour ajouter un dernier style à notre feuille form.css, pour mettre en avant le succès de l'inscription :
+
+       * Les pages placées sous /WEB-INF ne sont par défaut pas accessibles au public par une URL.
+
+       * La méthode d'envoi des données d'un formulaire se définit dans le code HTML via <form method="...">.
+
+       * Les données envoyées via un formulaire sont accessibles côté serveur via des appels à request.getParameter( "nom_du_champ" ).
+
+       * La validation des données, lorsque nécessaire, peut se gérer simplement avec les exceptions et des interceptions
+         via des blocs try / catch.
+
+       * Le renvoi de messages à l'utilisateur peut se faire via une simple Map placée en tant qu'attribut de requête.
+
+       * L'affichage de ces messages côté JSP se fait alors via de simples et courtes expressions EL.
+
+       * Il ne faut jamais afficher du contenu issu d'un utilisateur sans le sécuriser, afin d'éliminer le risque de
+         failles XSS.
+
+       * Placer la validation et les traitements sur les données dans la servlet n'est pas une bonne solution, il faut
+         trouver mieux.
+
 --%>
 
 
@@ -56,7 +148,7 @@
         <p>Vous pouvez vous inscrire via ce formulaire.</p>
 
         <label for="email">Adresse email <span class="requis">*</span></label>
-        <input type="text" id="email" name="email" value="" size="20" maxlength="60"/>
+        <input type="text" id="email" name="email" value="<c:out value="${param.email}"/>" size="20" maxlength="60"/>
         <span class="erreur">${requestScope.erreurs['email']}</span>
         <br/>
 
@@ -71,12 +163,15 @@
         <br/>
 
         <label for="nom">Nom d'utilisateur</label>
-        <input type="text" id="nom" name="nom" value="" size="20" maxlength="20"/>
+        <input type="text" id="nom" name="nom" value="<c:out value="${param.nom}"/>" size="20" maxlength="20"/>
         <span class="erreur">${requestScope.erreurs['nom']}</span>
         <br/>
 
         <input type="submit" value="Inscription" class="sansLabel"/>
         <br/>
+
+        <p class="${empty requestScope.erreurs ? 'succes' : 'erreur'}">${requestScope.resultat}</p>
+
     </fieldset>
 </form>
 
