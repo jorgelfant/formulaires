@@ -34,3 +34,7 @@ form input.sansLabel {
 form .requis {
     color: #c00;
 }
+/******************************* Pour afficher les messages de erreur en rouge ***************************************/
+form .erreur {
+    color: #900;
+}

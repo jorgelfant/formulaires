@@ -140,6 +140,59 @@ appeler l'URL suivante :
 
 http://localhost:8080/pro/inscription
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                L'envoi des données
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Maintenant que nous avons accès à notre page d'inscription, nous pouvons saisir des données dans le formulaire et les
+envoyer au serveur. Remplissez les champs du formulaire avec un nom d'utilisateur, un mot de passe et une adresse mail
+de votre choix, puis cliquez sur le bouton d'inscription. Voici à la figure suivante la page que vous obtenez.
+
+Eh oui, nous avons demandé un envoi des données du formulaire par la méthode POST, mais nous n'avons pas surchargé la
+méthode doPost() dans notre servlet, nous avons uniquement écrit une méthode doGet(). Par conséquent, notre servlet
+n'est pas encore capable de traiter une requête POST !
+
+
+Nous savons donc ce qu'il nous reste à faire : il faut implémenter la méthode doPost(). Voici le code modifié de
+notre servlet :
+
+Maintenant que nous avons ajouté une méthode doPost(), nous pouvons envoyer les données du formulaire, il n'y aura plus
+d'erreur HTTP !
+Par contre, la méthode doPost() étant vide, nous obtenons bien évidemment une page blanche en retour...
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                      Contrôle : côté servlet
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Maintenant que notre formulaire est accessible à l'utilisateur et que la servlet en charge de son contrôle est en place,
+nous pouvons nous attaquer à la vérification des données envoyées par le client.
+
+Que souhaitons-nous vérifier ?
+
+Nous travaillons sur un formulaire d'inscription qui contient quatre champs de type <input>, cela ne va pas être bien
+compliqué. Voici ce que je vous propose de vérifier :
+
+      * que le champ obligatoire email n'est pas vide et qu'il contient une adresse mail valide ;
+
+      * que les champs obligatoires mot de passe et confirmation ne sont pas vides, qu'ils contiennent au moins 3
+        caractères, et qu'ils sont égaux ;
+
+      * que le champ facultatif nom, s'il est rempli, contient au moins 3 caractères.
+
+Nous allons confier ces tâches à trois méthodes distinctes :
+
+      * une méthode validationEmail(), chargée de valider l'adresse mail saisie ;
+
+      * une méthode validationMotsDePasse(), chargée de valider les mots de passe saisis ;
+
+      * une méthode validationNom(), chargée de valider le nom d'utilisateur saisi.
+
+Voici donc le code modifié de notre servlet, impliquant la méthode doPost(), des nouvelles constantes et les méthodes
+de validation créées pour l'occasion, en charge de récupérer le contenu des champs du formulaire et de les faire valider :
+
+
+
 --%>
 
 </body>
